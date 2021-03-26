@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'paypal.standard.ipn',
     'pgserver.core',
     'rest_framework',
     'corsheaders',
@@ -146,3 +147,8 @@ PAYTM_CALLBACK_URL = "http://localhost:8000/api/v1/paytm/response/" # Hardcode
 PAYTM_WEBSITE = os.environ.get('PAYTM_WEBSITE','WEBSTAGING')
 PAYTM_PAYMENT_GATEWAY_URL = "https://securegw-stage.paytm.in/order/process"
 PAYTM_TRANSACTION_STATUS_URL = "https://securegw-stage.paytm.in/order/status"
+
+
+#Paypal Fields
+PAYPAL_RECEIVER_EMAIL = os.environ.get('PAYTM_COMPANY_NAME','k.sriram4493@gmail.com')
+PAYPAL_TEST = True

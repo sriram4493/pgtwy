@@ -1,9 +1,11 @@
+import paypal
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import F
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -12,6 +14,8 @@ from . import Checksum
 from .utils import VerifyPaytmResponse
 from .models import Transaction,UserProfile
 from datetime import datetime,timezone as tz
+from django.conf import settings
+from paypal.standard.forms import PayPalPaymentsForm
 
 @api_view(["GET"])
 def get_transactions(request):
@@ -84,3 +88,34 @@ def paytm_response(request):
             return HttpResponse({"message":"Transaction Was Not Initiated"}, status=200)
     else:
         return HttpResponse({"message":"Transaction Failed"}, status=400)
+
+def process_payment(request):
+    order = Checksum.__id_generator__()
+    # order = get_object_or_404(Order, id=order_id)
+    host = request.get_host()
+
+    paypal_dict = {
+        'business': settings.PAYPAL_RECEIVER_EMAIL,
+        'amount': '',
+        'item_name': 'Order {}'.format(order),
+        'invoice': str(order),
+        'currency_code': 'INR',
+        'notify_url': 'http://{}{}'.format(host,
+                                           reverse('paypal-ipn')),
+        'return_url': 'http://{}{}'.format(host,
+                                           reverse('payment_done')),
+        'cancel_return': 'http://{}{}'.format(host,
+                                              reverse('payment_cancelled')),
+    }
+
+    form = PayPalPaymentsForm(initial=paypal_dict)
+    return render(request, 'paypal.html', {'order': order, 'form': form})
+
+@csrf_exempt
+def payment_done(request):
+    return render(request, 'paypal_sucess.html')
+
+
+@csrf_exempt
+def payment_canceled(request):
+    return render(request, 'paypal_failure.html')
